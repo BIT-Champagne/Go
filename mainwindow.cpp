@@ -54,14 +54,14 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.setPen(gridPen);
 
     for (int i = 0; i < BOARD_SIZE; ++i) {
-        // 横线
+        // 画横线
         painter.drawLine(
             MARGIN,
             MARGIN + i * CELL_SIZE,
             MARGIN + totalSize,
             MARGIN + i * CELL_SIZE
             );
-        // 竖线
+        // 画竖线
         painter.drawLine(
             MARGIN + i * CELL_SIZE,
             MARGIN,
@@ -70,7 +70,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
             );
     }
 
-    // 绘制星位（天元和四星）
+    // 绘制9个星位
     QVector<QPoint> starPoints = {
         QPoint(3, 3), QPoint(3, 9), QPoint(3, 15),
         QPoint(9, 3), QPoint(9, 9), QPoint(9, 15),
@@ -114,22 +114,22 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
         int y = (event->y() - MARGIN + CELL_SIZE/2) / CELL_SIZE;
 
         if (isValidPosition(x, y) && board[x][y] == EMPTY) {
-            // 1. 先判断劫争（此时 currentPlayer 是即将落子的颜色）
+            // 先判断劫争
             if (isKo(x, y)) {
                 QMessageBox::information(this, "提示", "这是劫争，需先在其他地方落子");
                 return;
             }
 
-            // 2. 落子
+            // 落子
             board[x][y] = currentPlayer;
 
-            // 3. 检查提子并更新劫争信息
+            // 检查提子并更新劫争信息
             checkAndRemoveDeadStones(x, y);
 
-            // 4. 切换玩家
+            // 切换玩家
             currentPlayer = (currentPlayer == BLACK) ? WHITE : BLACK;
 
-            // 5. 重绘
+            // 更新棋盘
             update();
         }
     }
@@ -191,7 +191,7 @@ void MainWindow::checkAndRemoveDeadStones(int x, int y)
     lastMove = {x, y};
 }
 
-// 检测一组相连棋子的气（使用BFS）
+// 检测一组棋子是否有气（BFS）
 bool MainWindow::hasLiberty(int x, int y, Stone color, std::vector<std::pair<int, int>>& visited)
 {
     if (!isValidPosition(x, y) || board[x][y] != color)
@@ -240,9 +240,6 @@ void MainWindow::removeStones(const std::vector<std::pair<int, int>>& stones)
 {
     for (const auto& [x, y] : stones) {
         board[x][y] = EMPTY;
-
-        // 从视觉上移除棋子
-        // （如果使用QGraphicsScene实现会更优雅，这里简化处理）
         update();
     }
 }
@@ -256,7 +253,6 @@ bool MainWindow::isValidPosition(int x, int y) const
 // 简单劫争判断（防止无限循环提子）
 bool MainWindow::isKo(int x, int y)
 {
-    // 关键修正：当前准备落子的颜色是 currentPlayer（而非 board[x][y]，此时还未落子）
     Stone currentColor = currentPlayer;
     Stone opponentColor = (currentColor == BLACK) ? WHITE : BLACK;
 
